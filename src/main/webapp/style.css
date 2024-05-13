@@ -1,0 +1,75 @@
+:root {
+    --darker: #888;
+    --dark: #aaa;
+    --light: #fff;
+}
+
+body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+}
+
+nav {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+nav, footer {
+    background: var(--darker);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+nav a,
+footer a {
+    text-decoration: none;
+    color: var(--light);
+    padding: 16px;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.login, .signup, .about-us, .rooms, .room, .booking, .bookings, .account-info {
+    background: var(--dark);
+    padding: 16px;
+    margin: 16px;
+    width: 60vw;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.room, .booking {
+    width: 55vw
+}
+
+img, video{
+    width: 50vw;
+}
+
+.login div, .signup div, button {
+    margin: 8px;
+    padding: 8px;
+}
+
+label {
+    display: block;
+    width: 150px;
+}
+
