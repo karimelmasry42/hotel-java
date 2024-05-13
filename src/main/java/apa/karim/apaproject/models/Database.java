@@ -1,34 +1,38 @@
-package apa.karim.apaproject;
+package apa.karim.apaproject.models;
 
 import java.sql.*;
 import java.time.Period;
 import java.util.ArrayList;
 
 public class Database {
-    private final String conStr = "jdbc:mysql://root@127.0.0.1/web_project_db?statusColor=686B6F&env=local&name=web-project-db-connection&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=true&useSSL=false";
+    private static final String connStr = "jdbc:mysql://root@127.0.0.1/web_project_db?statusColor=686B6F&env=local&name=web-project-db-connection&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=true&useSSL=false";
 
     // ------------ INIT -------------
-    public Database() {
+    private static Connection initConnection() {
+        Connection conn = null;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Driver loaded");
+            conn = DriverManager.getConnection(connStr);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return conn;
     }
     // ----------- END INIT -----------
 
     // ----------- GET LISTS ---------------
     // returns list of all rooms
-    public ArrayList<Room> getRooms() {
+    public static ArrayList<Room> getRooms() {
         ArrayList<Room> rooms = new ArrayList<>();
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery("select * from rooms;")
         ) {
             while (rs.next()) {
-                int id = rs.getInt("room_id");
+                int id = rs.getInt("roomID");
                 String name = rs.getString("name");
                 String description = rs.getString("description");
                 int price = rs.getInt("price");
@@ -43,28 +47,28 @@ public class Database {
     }
 
     // returns list of all bookings made by guest g
-    public ArrayList<Booking> getBookings(Guest g) {
+    public static ArrayList<Booking> getBookings(Guest g) {
         ArrayList<Booking> bookings = new ArrayList<>();
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 PreparedStatement ps = conn.prepareStatement(
-                        "select * from bookings where guest_email= ?");
+                        "select * from bookings where guestEmail = ?");
         ) {
-            ps.setString(1, g.getEmail());
+            ps.setString(1, g.getGuestEmail());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    int booking_id = rs.getInt("booking_id");
-                    int room_id = rs.getInt("room_id");
+                    int bookingID = rs.getInt("bookingID");
+                    int roomID = rs.getInt("roomID");
                     int price = rs.getInt("price");
                     String status = rs.getString("status");
-                    Date check_in = rs.getDate("check_in");
-                    Date check_out = rs.getDate("check_out");
-                    Booking b = new Booking(booking_id, g.getEmail(), room_id, status, price, check_in, check_out);
+                    Date checkIn = rs.getDate("checkIn");
+                    Date checkOut = rs.getDate("checkOut");
+                    Booking b = new Booking(bookingID, g.getGuestEmail(), roomID, status, price, checkIn, checkOut);
                     bookings.add(b);
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Could not get bookings for guest " + g.getEmail() + ": " + e.getMessage());
+            System.out.println("Could not get bookings for guest " + g.getGuestEmail() + ": " + e.getMessage());
         }
         return bookings;
     }
@@ -72,19 +76,19 @@ public class Database {
 
     // ---------- GET WITH PK ---------
     // returns Room object; null if it can't get object
-    public Room getRoom(long room_id) {
+    public static Room getRoom(long roomID) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 PreparedStatement ps = conn.prepareStatement(
-                        "select room_id, name, description, price, capacity " +
-                                "from rooms where room_id= ?");
+                        "select roomID, name, description, price, capacity " +
+                                "from rooms where roomID= ?");
         ) {
-            ps.setLong(1, room_id);
+            ps.setLong(1, roomID);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next())
                     return null;
                 Room r = new Room();
-                r.setRoom_id(rs.getLong(1));
+                r.setRoomID(rs.getLong(1));
                 r.setName(rs.getString(2));
                 r.setDescription(rs.getString(3));
                 r.setPrice(rs.getInt(4));
@@ -92,55 +96,55 @@ public class Database {
                 return r;
             }
         } catch (SQLException e) {
-            System.out.println("Could not get room " + room_id + ": " + e.getMessage());
+            System.out.println("Could not get room " + roomID + ": " + e.getMessage());
         }
         return null;
     }
 
     // returns Guest object; null if it can't get object
-    public Guest getGuest(String guest_email) {
+    public static Guest getGuest(String guestEmail) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 PreparedStatement ps = conn.prepareStatement(
-                        "select name, password from guests where email= ?");
+                        "select name, password from guests where guestEmail= ?");
         ) {
-            ps.setString(1, guest_email);
+            ps.setString(1, guestEmail);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next())
                     return null;
                 Guest g = new Guest();
                 g.setName(rs.getString(1));
-                g.setEmail(guest_email);
+                g.setGuestEmail(guestEmail);
                 g.setPassword(rs.getString(2));
                 return g;
             }
         } catch (SQLException e) {
-            System.out.println("Could not get guest " + guest_email + ": " + e.getMessage());
+            System.out.println("Could not get guest " + guestEmail + ": " + e.getMessage());
         }
         return null;
     }
 
     // returns Booking object; null if it can't get object
-    public Booking getBooking(long booking_id) {
+    public static Booking getBooking(long bookingID) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 Statement s = conn.createStatement();
                 ResultSet rs = s.executeQuery(
-                        "select * from bookings where booking_id= " + booking_id)
+                        "select * from bookings where bookingID= " + bookingID)
         ) {
             if (!rs.next())
                 return null;
             Booking b = new Booking();
-            b.setBooking_id(booking_id);
-            b.setGuest_email(rs.getString("guest_email"));
-            b.setRoom_id(rs.getLong("room_id"));
+            b.setBookingID(bookingID);
+            b.setGuestEmail(rs.getString("guestEmail"));
+            b.setRoomID(rs.getLong("roomID"));
             b.setPrice(rs.getInt("price"));
             b.setStatus(rs.getString("status"));
-            b.setCheck_in(rs.getDate("check_in"));
-            b.setCheck_out(rs.getDate("check_out"));
+            b.setCheckIn(rs.getDate("checkIn"));
+            b.setCheckOut(rs.getDate("checkOut"));
             return b;
         } catch (SQLException e) {
-            System.out.println("Could not get booking: " + booking_id + ": " + e.getMessage());
+            System.out.println("Could not get booking: " + bookingID + ": " + e.getMessage());
         }
         return null;
     }
@@ -148,31 +152,31 @@ public class Database {
 
     // -------------- UPDATE -----------
     // returns true if update successful; false otherwise
-    public boolean updateGuest(Guest g) {
+    public static boolean updateGuest(Guest g) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 PreparedStatement ps = conn.prepareStatement(
-                        "update guests set name = ?, password = ?  where email = ?;")
+                        "update guests set name = ?, password = ?  where guestEmail = ?;")
         ) {
             ps.setString(1, g.getName());
             ps.setString(2, g.getPassword());
-            ps.setString(3, g.getEmail());
+            ps.setString(3, g.getGuestEmail());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Could not update guest " + g.getEmail() + ": " + e.getMessage());
+            System.out.println("Could not update guest " + g.getGuestEmail() + ": " + e.getMessage());
         }
         return false;
     }
 
     // returns true if update successful; false otherwise
-    public boolean cancelBooking(long booking_id) {
+    public static boolean cancelBooking(long bookingID) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 Statement s = conn.createStatement()
         ) {
-            return s.executeUpdate("update bookings set status = 'Cancelled'where booking_id = " + booking_id) > 0;
+            return s.executeUpdate("update bookings set status = 'Cancelled'where bookingID = " + bookingID) > 0;
         } catch (SQLException e) {
-            System.out.println("Could not cancel booking " + booking_id + ": " + e.getMessage());
+            System.out.println("Could not cancel booking " + bookingID + ": " + e.getMessage());
         }
         return false;
     }
@@ -180,57 +184,55 @@ public class Database {
 
     // -------------- STORE -------------
     // returns true if successfully stored, false otherwise
-    public boolean storeGuest(Guest g) {
+    public static boolean storeGuest(Guest g) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
+                Connection conn = Database.initConnection();
                 PreparedStatement ps = conn.prepareStatement(
-                        "insert into guests (name, email, password) values (?, ?, ?)")
+                        "insert into guests (name, guestEmail, password) values (?, ?, ?)")
         ) {
             ps.setString(1, g.getName());
-            ps.setString(2, g.getEmail());
+            ps.setString(2, g.getGuestEmail());
             ps.setString(3, g.getPassword());
-            try {
-                ps.executeUpdate();
-            } catch (SQLIntegrityConstraintViolationException e) {
-                return false;
-            }
+            ps.executeUpdate();
             return true;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            return false;
         } catch (SQLException e) {
-            System.out.println("Could not store guest " + g.getEmail() + ": " + e.getMessage());
+            System.out.println("Could not store guest " + g.getGuestEmail() + ": " + e.getMessage());
         }
         return false;
     }
 
-    // returns booking_id if successful, -1 if failed
-    public boolean storeBooking(Booking b) {
+    // returns bookingID if successful, -1 if failed
+    public static boolean storeBooking(Booking b) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
-                PreparedStatement s = conn.prepareStatement("SELECT price FROM rooms WHERE room_id = ?");
+                Connection conn = Database.initConnection();
+                PreparedStatement s = conn.prepareStatement("SELECT price FROM rooms WHERE roomID = ?");
                 PreparedStatement ps = conn.prepareStatement(
-                        "insert into bookings (guest_email, room_id, price, status, check_in, check_out) " +
+                        "insert into bookings (guestEmail, roomID, price, status, checkIn, checkOut) " +
                                 "values (?, ?, ?, ?, ?, ?);")
         ) {
             int price = 0;
-            s.setLong(1, b.getRoom_id());
+            s.setLong(1, b.getRoomID());
             try (ResultSet rs = s.executeQuery()) {
                 rs.next();
                 price = rs.getInt(1);
-            }catch(Exception e) {
-                System.out.println("Could not get price for room " + b.getRoom_id() + ": " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Could not get price for room " + b.getRoomID() + ": " + e.getMessage());
             }
-            Period period = Period.between(b.getCheck_out().toLocalDate(), b.getCheck_in().toLocalDate());
+            Period period = Period.between(b.getCheckOut().toLocalDate(), b.getCheckIn().toLocalDate());
             int days = Math.abs(period.getDays());
 
             price *= days;
-            ps.setString(1, b.getGuest_email());
-            ps.setLong(2, b.getRoom_id());
+            ps.setString(1, b.getGuestEmail());
+            ps.setLong(2, b.getRoomID());
             ps.setInt(3, price);
             ps.setString(4, "Paid");
-            ps.setDate(5, b.getCheck_in());
-            ps.setDate(6, b.getCheck_out());
+            ps.setDate(5, b.getCheckIn());
+            ps.setDate(6, b.getCheckOut());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Could not store booking for guest " + b.getGuest_email() + ": " + e.getMessage());
+            System.out.println("Could not store booking for guest " + b.getGuestEmail() + ": " + e.getMessage());
         }
         return false;
     }
@@ -238,12 +240,12 @@ public class Database {
 
     // ------ LOGIN ------
     // returns Guest object; null if it can't get object
-    public int login(Guest g) {
+    public static int login(Guest g) {
         try (
-                Connection conn = DriverManager.getConnection(conStr);
-                PreparedStatement ps = conn.prepareStatement("select password from guests where email = ?")
+                Connection conn = Database.initConnection();
+                PreparedStatement ps = conn.prepareStatement("select password from guests where guestEmail = ?")
         ) {
-            ps.setString(1, g.getEmail());
+            ps.setString(1, g.getGuestEmail());
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next())
                     return 0;
@@ -252,7 +254,7 @@ public class Database {
                 return 2;
             }
         } catch (SQLException e) {
-            System.out.println("Could not get guest " + g.getEmail() + ": " + e.getMessage());
+            System.out.println("Could not get guest " + g.getGuestEmail() + ": " + e.getMessage());
         }
         return 0;
     }

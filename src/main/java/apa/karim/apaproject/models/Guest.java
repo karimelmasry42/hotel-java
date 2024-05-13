@@ -1,17 +1,17 @@
-package apa.karim.apaproject;
+package apa.karim.apaproject.models;
 
 import java.io.Serializable;
 
 public class Guest implements Serializable {
     private String name;
-    private String email;
+    private String guestEmail;
     private String password;
 
     public Guest() {
     }
-    public Guest(String name, String email, String password) {
+    public Guest(String name, String guestEmail, String password) {
         this.name = name;
-        this.email = email;
+        this.guestEmail = guestEmail;
         this.password = password;
     }
 
@@ -23,12 +23,12 @@ public class Guest implements Serializable {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
+    public String getGuestEmail() {
+        return guestEmail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setGuestEmail(String guestEmail) {
+        this.guestEmail = guestEmail;
     }
 
     public String getPassword() {

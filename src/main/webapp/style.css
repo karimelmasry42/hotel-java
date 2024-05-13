@@ -56,10 +56,11 @@ main {
 }
 
 .room, .booking {
-    width: 55vw
+    width: 55vw;
+    border: 1px solid black;
 }
 
-img, video{
+img, video {
     width: 50vw;
 }
 
